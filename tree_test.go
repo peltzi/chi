@@ -275,6 +275,9 @@ func TestTreeRegexp(t *testing.T) {
 	hStub5 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub6 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub7 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub8 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	})
 
 	tr := &node{}
 	tr.InsertRoute(mGET, "/articles/{rid:^[0-9]{5,6}}", hStub7)
@@ -284,6 +287,9 @@ func TestTreeRegexp(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{id:^[0-9]+}", hStub1)
 	tr.InsertRoute(mGET, "/articles/{id:^[1-9]+}-{aux}", hStub6)
 	tr.InsertRoute(mGET, "/articles/{slug}", hStub2)
+
+	tr.InsertRoute(mGET, "/blogs/{empty:.*}/posts", hStub8)
+	tr.InsertRoute(mGET, "/blogs/{noempty:.+}/action", hStub8)
 
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
@@ -306,6 +312,9 @@ func TestTreeRegexp(t *testing.T) {
 		{r: "/articles/1/run", h: hStub5, k: []string{"op"}, v: []string{"1"}},
 		{r: "/articles/1122", h: hStub1, k: []string{"id"}, v: []string{"1122"}},
 		{r: "/articles/1122-yes", h: hStub6, k: []string{"id", "aux"}, v: []string{"1122", "yes"}},
+		{r: "/blogs//posts", h: hStub8, k: []string{"empty"}, v: []string{""}},
+		{r: "/blogs//action", h: nil, k: []string{}, v: []string{}},
+		{r: "/blogs/123/action", h: hStub8, k: []string{"noempty"}, v: []string{"123"}},
 	}
 
 	for i, tt := range tests {
@@ -386,12 +395,14 @@ func TestTreeRegexpRecursive(t *testing.T) {
 
 func TestTreeRegexMatchWholeParam(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	rctx := NewRouteContext()
 	tr := &node{}
 	tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
-	tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
 	tr.InsertRoute(mGET, "/{param:[0-9]*}/test", hStub1)
+	tr.InsertRoute(mGET, "/{x:.+}/foo", hStub2)
+	tr.InsertRoute(mGET, "/foo/{x:.+}/foo", hStub2)
 
 	tests := []struct {
 		expectedHandler http.Handler
@@ -401,8 +412,9 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 		{url: "/a13", expectedHandler: nil},
 		{url: "/13.jpg", expectedHandler: nil},
 		{url: "/a13.jpg", expectedHandler: nil},
-		{url: "/a/foo", expectedHandler: hStub1},
+		{url: "/a/foo", expectedHandler: hStub2},
 		{url: "//foo", expectedHandler: nil},
+		{url: "/foo//foo", expectedHandler: nil},
 		{url: "//test", expectedHandler: hStub1},
 	}
 

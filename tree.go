@@ -429,7 +429,8 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					} else {
 						continue
 					}
-				} else if ntyp == ntRegexp && p == 0 {
+				} else if ntyp == ntRegexp && p == 0 && xn.rex != nil && !xn.rex.MatchString(xsearch[:p]) {
+					xn = nil
 					continue
 				}
 
@@ -481,6 +482,10 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 		}
 
 		if xn == nil {
+			// Did not find final handler, let's remove the param here if it was set
+			if len(rctx.routeParams.Values) > 0 {
+				rctx.routeParams.Values = rctx.routeParams.Values[:len(rctx.routeParams.Values)-1]
+			}
 			continue
 		}
 

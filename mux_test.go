@@ -1473,7 +1473,7 @@ func TestMuxRegexp2(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "" {
+	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "404 page not found\n" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/foo-abc.json", nil); body != "abc" {
